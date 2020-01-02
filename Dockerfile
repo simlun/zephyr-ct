@@ -1,9 +1,10 @@
 # Ubuntu 18.04 (Bionic)
-FROM ubuntu:bionic-20191029
+FROM ubuntu:bionic-20191202
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt -y update
-RUN apt -y install python2.7
+RUN apt -y upgrade
+RUN apt -y install python2.7 libpython2.7
 
 # 1. Select and Update OS
 # Zephyr development depends on an up-to-date host system and common build
@@ -52,31 +53,7 @@ RUN pip3 install -r /root/zephyrproject/zephyr/scripts/requirements.txt
 # includes host tools such as custom QEMU binaries and a host compiler
 RUN wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.10.3/zephyr-sdk-0.10.3-setup.run && \
     chmod +x zephyr-sdk-0.10.3-setup.run && \
-    ./zephyr-sdk-0.10.3-setup.run -- -d /root/zephyr-sdk-0.10.3 && \
+    ./zephyr-sdk-0.10.3-setup.run -- -d /opt/zephyr-sdk-0.10.3 && \
     rm -rf zephyr-sdk-0.10.3-setup.run
 ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
-ENV ZEPHYR_SDK_INSTALL_DIR=/root/zephyr-sdk-0.10.3
-# The SDK contains a udev rules file that provides information needed to
-# identify boards and grant hardware access permission to flash tools. Install
-# these udev rules with these commands:
-RUN apt -y install udev
-RUN cp /root/zephyr-sdk-0.10.3/sysroots/x86_64-pokysdk-linux/usr/share/openocd/contrib/60-openocd.rules \
-        /etc/udev/rules.d
-#udevadm control --reload
-
-# 6. Build the Blinky Application
-# The sample Blinky Application blinks an LED on the target board. By building
-# and running it, we can verify that the environment and tools are properly set
-# up for Zephyr development.
-# This west command uses the -p auto parameter to automatically clean out any
-# byproducts from a previous build if needed, useful if you try building
-# another sample.
-RUN bash -c "cd zephyrproject/zephyr && \
-    source zephyr-env.sh && \
-    west build -p auto -b nrf52840_papyr samples/basic/blinky"
-
-WORKDIR zephyrproject/zephyr
-
-RUN apt -y install libpython2.7
-# Run with --privileged
-# Then run "west flash" to flash
+ENV ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.10.3
